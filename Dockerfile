@@ -25,5 +25,7 @@ RUN apt-get update \
     && apt-get dist-upgrade --autoremove --purge -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
+COPY secret.sh /usr/local/bin/secret.sh
+
 ENV HOME=/tmp
 USER nobody
