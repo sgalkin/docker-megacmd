@@ -8,6 +8,7 @@ ARG MEGACMD_URL=https://mega.nz/linux/MEGAsync/xUbuntu_18.04/amd64/${MEGACMD_DEB
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        curl \
         gnupg2 \
         libc-ares2 \
         libcrypto++6 \
@@ -15,17 +16,19 @@ RUN apt-get update \
         libpcrecpp0v5 \
         libssl1.1 \
         libzen0v5 \
-        wget \
     && echo 'path-include=/usr/share/doc/megacmd/*' > /etc/dpkg/dpkg.cfg.d/megacmd \
-    && wget -O ${MEGACMD_DEB} ${MEGACMD_URL} \
+    && curl -o ${MEGACMD_DEB} ${MEGACMD_URL} \
     && dpkg -i ${MEGACMD_DEB} \
     && rm -rf ${MEGACMD_DEB} \
-    && apt-get autoremove --purge -y wget \
     && apt-get update \
     && apt-get dist-upgrade --autoremove --purge -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY secret.sh /usr/local/bin/secret.sh
+COPY login.sh /usr/local/bin/login.sh
 
 ENV HOME=/tmp
 USER nobody
+
+ENTRYPOINT ["/bin/sh", "-e", "-c", "/usr/local/bin/login.sh $@"]
+
