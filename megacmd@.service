@@ -1,0 +1,15 @@
+[Unit]
+Description=MegaCMD for %I
+After=docker.service
+
+[Service]
+Type=simple
+ExecStart=/lib/systemd/megacmd.sh start %i
+ExecStop=/lib/systemd/megacmd.sh stop %i
+
+RemainAfterExit=yes
+Restart=always
+TimeoutStartSec=5sec
+
+[Install]
+WantedBy=multi-user.target
