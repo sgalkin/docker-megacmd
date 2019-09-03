@@ -8,7 +8,20 @@ fi
 LOGIN=$1
 VAULT=$2
 
-mega-login "${LOGIN}" "$(secret.sh ${LOGIN} mega ${VAULT})"
-echo $?
+tail -F /tmp/.megaCmd/megacmdserver.log &
+TAIL=$!
 
-tail -f /tmp/.megaCmd/megacmdserver.log
+trap 'exit 0' HUP INT TERM QUIT
+trap 'mega-logout || true; kill ${TAIL} || true; exit 0' EXIT
+
+while true; do
+    mega-login "${LOGIN}" "$(secret.sh ${LOGIN} mega ${VAULT})"
+    while mega-whoami > /dev/null; do
+        sleep 5m &
+        wait $! || true
+    done
+done
+
+wait ${TAIL}
+
+exit 0

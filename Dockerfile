@@ -26,9 +26,10 @@ RUN apt-get update \
 
 COPY secret.sh /usr/local/bin/secret.sh
 COPY login.sh /usr/local/bin/login.sh
+RUN chmod 755 /usr/local/bin/login.sh
 
 ENV HOME=/tmp
 USER nobody
 
-ENTRYPOINT ["/bin/sh", "-e", "-c", "/usr/local/bin/login.sh $@"]
+ENTRYPOINT ["/usr/local/bin/login.sh"]
 
