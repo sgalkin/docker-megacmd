@@ -1,12 +1,15 @@
 #!/bin/sh -e
 
-if [ $# -ne 2 ]; then
-    echo usage $0 login vault
-    exit 1
+if [ $# -eq 0 ]; then
+   LOGIN=${LOGIN?no login}
+   VAULT=${VAULT?no vault}
+elif [ $# -eq 2 ]; then
+   LOGIN=${1?no login}
+   VAULT=${2?no vault}
+else
+   echo usage $0 login vault
+   exit 1
 fi
-
-LOGIN=$1
-VAULT=$2
 
 tail -F /tmp/.megaCmd/megacmdserver.log &
 TAIL=$!
