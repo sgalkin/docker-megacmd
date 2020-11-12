@@ -19,7 +19,7 @@ TOKEN=$(curl -s -H "${METADATA_HEADER}" "${METADATA_URL}" | \
 SECRET_ID=$(echo -n ${TYPE}:${IDENTITY} | sha256sum | sed -n 's/^\(^\S*\) .*$/\1/gp')
 
 VAULT_HEADER="Authorization: Bearer ${TOKEN}"
-VAULT_URL="https://${VAULT}/secrets/${SECRET_ID}?api-version=2016-10-01"
+VAULT_URL="${VAULT}secrets/${SECRET_ID}?api-version=2016-10-01"
 
 SECRET=$(curl -s -H "${VAULT_HEADER}" "${VAULT_URL}" | \
          sed -n 's/.*"value":"\([^"]*\)".*/\1/gp')
