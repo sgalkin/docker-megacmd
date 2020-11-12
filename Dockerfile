@@ -1,9 +1,9 @@
-ARG VERSION=18.04
+ARG VERSION=20.04
 FROM ubuntu:$VERSION
 
 ARG VERSION
 ARG MEGACMD_DEB=megacmd-xUbuntu_${VERSION}_amd64.deb
-ARG MEGACMD_URL=https://mega.nz/linux/MEGAsync/xUbuntu_18.04/amd64/${MEGACMD_DEB}
+ARG MEGACMD_URL=https://mega.nz/linux/MEGAsync/xUbuntu_${VERSION}/amd64/${MEGACMD_DEB}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
