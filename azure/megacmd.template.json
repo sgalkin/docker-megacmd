@@ -35,10 +35,7 @@
                         }
                     ],
                     "output": {
-                        "value": "[resourceId(
-                            'Microsoft.KeyVault/vaults/secrets', 
-                            parameters('keyVaultName'), 
-                            parameters('secretName'))]",
+                        "value": "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('secretName'))]",
                         "type": "string"
                     }
                 },
@@ -47,13 +44,14 @@
                         {
                             "name": "baseName",
                             "type": "string"
+                        },
+                        {
+                            "name": "instanaceName",
+                            "type": "string"
                         }
                     ],
                     "output": {
-                        "value": "[concat(
-                            'megacmd', 
-                            '-', 
-                            substring(parameters('baseName'), 0, 32))]",
+                        "value": "[concat(parameters('baseName'), '-', substring(parameters('instanaceName'), 0, 32))]",
                         "type": "string"
                     }
                 },
@@ -65,9 +63,7 @@
                         }
                     ],
                     "output": {
-                        "value": "[resourceId(
-                            'Microsoft.ContainerInstance/containerGroups', 
-                            parameters('containerName'))]",
+                        "value": "[resourceId('Microsoft.ContainerInstance/containerGroups', parameters('containerName'))]",
                         "type": "string"
                     }
                 },
@@ -83,10 +79,7 @@
                         }
                     ],
                     "output": {
-                        "value": "[concat(
-                            parameters('baseName'), 
-                            '/Microsoft.Authorization/', 
-                            guid(uniqueString(parameters('guidBase'))))]",
+                        "value": "[concat(parameters('baseName'), '/Microsoft.Authorization/', guid(uniqueString(parameters('guidBase'))))]",
                         "type": "string"
                     }
                 },
@@ -98,14 +91,7 @@
                         }
                     ],
                     "output": {
-                        "value": "[concat(
-                            subscription().id,
-                            '/providers',
-                            '/Microsoft.Authorization',
-                            '/roleDefinitions',
-                            '/',
-                            parameters('role')
-                        )]",
+                        "value": "[concat(subscription().id, '/providers', '/Microsoft.Authorization', '/roleDefinitions', '/', parameters('role'))]",
                         "type": "string"
                     }
                 }
@@ -113,18 +99,13 @@
         }
     ],
     "variables": {
+        "baseName": "megacmd",
         "containerCpu": 0.1,
         "containerMem": 0.1,
-        "keyVaultRef": "[resourceId(
-            resourceGroup().name,
-            'Microsoft.KeyVault/vaults', 
-            parameters('keyVaultName'))]",
+        "keyVaultRef": "[resourceId(resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
         "keyVaultApi": "2019-09-01",
         "keyVaultSecretsUserRole": "4633458b-17de-408a-b874-0445c86b69e6",
-        "containerRegistryRef": "[resourceId(
-            parameters('containerRegistryResouceGroupName'), 
-            'Microsoft.ContainerRegistry/registries', 
-            parameters('containerRegistryName'))]",
+        "containerRegistryRef": "[resourceId(parameters('containerRegistryResouceGroupName'), 'Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]",
         "containerRegistryApi": "2019-05-01",
         "containerInstanceApi": "2019-12-01",
         "roleAssignmentApi": "2020-04-01-preview",
@@ -135,94 +116,64 @@
         {
             "type": "Microsoft.ContainerInstance/containerGroups",
             "apiVersion": "[variables('containerInstanceApi')]",
-            "copy": {
-                "name": "containersLoop",
-                "count": "[length(parameters('secrets'))]"
-            },
-            "name": "[local.ContainerName(parameters('secrets')[copyIndex()])]",
+            "name": "[variables('baseName')]",
             "location": "[resourceGroup().location]",
             "identity": {
                 "type": "SystemAssigned"
             },
             "properties": {
                 "sku": "Standard",
-                "containers": [
-                    {
-                        "name": "[local.ContainerName(parameters('secrets')[copyIndex()])]",
-                        "properties": {
-                            "image": "[concat(
-                                reference(
-                                    variables('containerRegistryRef'), 
-                                    variables('containerRegistryApi'), 
-                                    'Full').properties.loginServer, 
-                                '/', 
-                                parameters('containerImage'))]",
-                            "ports": [],
-                            "environmentVariables": [
-                                {
-                                    "name": "[variables('envNameVault')]",
-                                    "value": "[reference(
-                                        variables('keyVaultRef'), 
-                                        variables('keyVaultApi'), 
-                                        'Full').properties.vaultUri]"
-                                },
-                                {
-                                    "name": "[variables('envNameLogin')]",
-                                    "value": "[reference(
-                                        local.KeyVaultSecretRef(
-                                            parameters('keyVaultName'), 
-                                            parameters('secrets')[copyIndex()]), 
-                                        variables('keyVaultApi'), 
-                                        'Full').tags.login]"
-                                }
-                            ],
-                            "resources": {
-                                "requests": {
-                                    "memoryInGB": "[variables('containerMem')]",
-                                    "cpu": "[variables('containerCpu')]"
-                                }
-                            }
-                        }   
-                    }
-                ],
                 "initContainers": [],
                 "imageRegistryCredentials": [
                     {
-                        "server": "[reference(
-                            variables('containerRegistryRef'), 
-                            variables('containerRegistryApi'), 
-                            'Full').properties.loginServer]",
-                        "username": "[listCredentials(
-                            variables('containerRegistryRef'), 
-                            variables('containerRegistryApi')).username]",
-                        "password": "[listCredentials(
-                            variables('containerRegistryRef'), 
-                            variables('containerRegistryApi')).passwords[0].value]"
+                        "server": "[reference(variables('containerRegistryRef'), variables('containerRegistryApi'), 'Full').properties.loginServer]",
+                        "username": "[listCredentials(variables('containerRegistryRef'), variables('containerRegistryApi')).username]",
+                        "password": "[listCredentials(variables('containerRegistryRef'), variables('containerRegistryApi')).passwords[0].value]"
                     }
                 ],
                 "restartPolicy": "Always",
-                "osType": "Linux"
+                "osType": "Linux",
+                "copy": [
+                    {
+                        "name": "containers",
+                        "count": "[length(parameters('secrets'))]",
+                        "input": {
+                            "name": "[local.ContainerName(variables('baseName'), parameters('secrets')[copyIndex('containers')])]",
+                            "properties": {
+                                "image": "[concat(reference(variables('containerRegistryRef'), variables('containerRegistryApi'), 'Full').properties.loginServer, '/', parameters('containerImage'))]",
+                                "ports": [],
+                                "environmentVariables": [
+                                    {
+                                        "name": "[variables('envNameVault')]",
+                                        "value": "[reference(variables('keyVaultRef'), variables('keyVaultApi'), 'Full').properties.vaultUri]"
+                                    },
+                                    {
+                                        "name": "[variables('envNameLogin')]",
+                                        "value": "[reference(local.KeyVaultSecretRef(parameters('keyVaultName'), parameters('secrets')[copyIndex('containers')]), variables('keyVaultApi'), 'Full').tags.login]"
+                                    }
+                                ],
+                                "resources": {
+                                    "requests": {
+                                        "memoryInGB": "[variables('containerMem')]",
+                                        "cpu": "[variables('containerCpu')]"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         },
         {
             "type": "Microsoft.KeyVault/vaults/providers/roleAssignments",
             "apiVersion": "[variables('roleAssignmentApi')]",
-            "name": "[local.RoleAssignmentName(
-                parameters('keyVaultName'), 
-                concat(parameters('keyVaultName'), parameters('secrets')[copyIndex()]))]",
-            "copy": {
-                "name": "rolesLoop",
-                "count": "[length(parameters('secrets'))]"
-            },
+            "name": "[local.RoleAssignmentName(parameters('keyVaultName'), concat(parameters('keyVaultName'), variables('baseName')))]",
             "dependsOn": [
-                "[local.ContainerRef(local.ContainerName(parameters('secrets')[copyIndex()]))]"
+                "[local.ContainerRef(variables('baseName'))]"
             ],
             "properties": {
                 "roleDefinitionId": "[local.RoleDefinitionId(variables('keyVaultSecretsUserRole'))]",
-                "principalId": "[reference(
-                    local.ContainerRef(local.ContainerName(parameters('secrets')[copyIndex()])), 
-                    variables('containerInstanceApi'), 
-                    'Full').identity.principalId]"
+                "principalId": "[reference(local.ContainerRef(variables('baseName')), variables('containerInstanceApi'), 'Full').identity.principalId]"
             }
         }
     ]
