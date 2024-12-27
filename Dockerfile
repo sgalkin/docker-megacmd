@@ -1,4 +1,4 @@
-ARG VERSION=22.04
+ARG VERSION=24.04
 FROM ubuntu:$VERSION
 
 ARG VERSION
@@ -9,13 +9,14 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
-        gnupg2 \
+        gpg \
         libc-ares2 \
-        libcrypto++8 \
+        libcares2 \
+        libicu74 \
         libmediainfo0v5 \
         libpcrecpp0v5 \
         libssl3 \
-        libzen0v5 \
+        libzen0t64 \
     && echo 'path-include=/usr/share/doc/megacmd/*' > /etc/dpkg/dpkg.cfg.d/megacmd \
     && curl -o ${MEGACMD_DEB} ${MEGACMD_URL} \
     && dpkg -i ${MEGACMD_DEB} \
